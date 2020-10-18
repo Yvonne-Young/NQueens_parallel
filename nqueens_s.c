@@ -6,12 +6,15 @@
 
 int count = 0;
 
+// To check if a location is safe to place a queen
 int isSafe(int ** board, int row, int col, int n) {
+    // check same row
     for (int c = 0; c < col; c ++) {
         if (board[row][c] == 1) {return 0;}
     }
     int i = row - 1; 
     int j = col - 1;
+    // check same diagonal(up)
     while (i >= 0 && j >= 0) {
         if (board[i][j] == 1) {return 0;}
         i --;
@@ -19,6 +22,7 @@ int isSafe(int ** board, int row, int col, int n) {
     }
     i = row + 1;
     j = col - 1;
+    // check same diagonal(down)
     while (i < n && j >= 0) {
         if (board[i][j] == 1) {return 0;}
         i ++;
@@ -27,6 +31,7 @@ int isSafe(int ** board, int row, int col, int n) {
     return 1;
 }
 
+// Recursive function
 void solveHelper(int ** board, int *** res, int n, int col) {
     if (col == n) {
         // memcpy(res[count++][0], board[0], sizeof(board));
@@ -47,6 +52,7 @@ void solveHelper(int ** board, int *** res, int n, int col) {
     }
 }
 
+// Print the board
 void printBoard(int ** board, int n) {
     for (int i = 0; i < n; i ++) {
         for (int j = 0; j < n; j ++) {
@@ -56,6 +62,7 @@ void printBoard(int ** board, int n) {
     }
 }
 
+// Initialization and entry to the recursive function
 void solveNQueens(int n) {
     int *** res = (int ***)malloc(1000 * sizeof(int **));
     int ** board = (int **)malloc(n * sizeof(int *));
