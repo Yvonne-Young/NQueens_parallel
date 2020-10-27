@@ -46,37 +46,25 @@ int isSafe(int ** board, int row, int col, int n) {
 // Recursive function
 void solveHelper(int ** board,int n,int col,int **opt_board,int *count,int *profit,int*profit_best){
     if (col == n) {
-        // memcpy(res[count++][0], board[0], sizeof(board));
-        int temp=*count;
-        /*
-        for (int i = 0; i < n; i ++) {
-            for (int j = 0; j < n; j ++) {
-                res[temp][i][j] = board[i][j];
-            }
-        }
-        */
-        if (*profit>*profit_best){
-            *profit_best=*profit;
-            for(int i=0;i<n;i++){
-                for(int j=0;j<n;j++){
+        int temp = *count;
+        if (*profit > *profit_best){
+            *profit_best = *profit;
+            for(int i = 0; i < n; i ++){
+                for(int j = 0; j < n; j ++){
                     opt_board[i][j] = board[i][j];
                 }
             }
         }
         *count = *count + 1;
-        //printf("count increase by 1,now is %d\n",*count);
         return;
     }
     for (int row = 0; row < n; row ++) {
         if (isSafe(board, row, col, n) == 1) {
             board[row][col] = 1;
-            *profit+=abs(col-row);
-            //printf("row = %d, col= %d is safe!\n",row,col);
-            solveHelper(board, n, col + 1,opt_board,count,profit,profit_best);
-            //printf("Remove row = %d, col= %d\n",row,col);
+            *profit += abs(col - row);
+            solveHelper(board, n, col + 1, opt_board, count, profit, profit_best);
             board[row][col] = 0;
-            *profit-=abs(col-row);
-            //printf("check count %d\n",*count );
+            *profit -= abs(col - row);
         }
     }
 }
@@ -93,17 +81,14 @@ void printBoard(int ** board, int n) {
 
 // Initialization and entry to the recursive function
 void solveNQueens(int n,int pid,int p,int **board_max) {
-    //int *** res         = (int ***)malloc(100000 * sizeof(int **));
     int ** board        = (int **)malloc(n * sizeof(int *));
     int *  count        = (int *)malloc(sizeof(int));
     int ** opt_board    = (int**)malloc(n * sizeof(int *));
-    //int ** board_max    = (int**)malloc(n * sizeof(int *));
     int *  profit       = (int *)malloc(sizeof(int));
     int *  profit_best  = (int *)malloc(sizeof(int));
 
     //a counter for each thread
      * count=0;
-     //* profit=0;
      * profit_best=0;
     for (int i = 0; i < n; i ++) {
         board[i] = (int *)malloc(n * sizeof(int));
@@ -113,7 +98,7 @@ void solveNQueens(int n,int pid,int p,int **board_max) {
             opt_board[i][j]=0;
         }
     }
-    //int iteration = (n+1)/2;
+
     for (int i=pid;i<n;i+=p)
     {
         board[i][0]=1;
@@ -122,8 +107,7 @@ void solveNQueens(int n,int pid,int p,int **board_max) {
         board[i][0]=0;
         *profit-=i;
     }
-    //solveHelper(board, res, n, 1);
-    //int res_size = sizeof(res) / (n * sizeof(int**));
+
     pthread_mutex_lock(&lock);
     totalcount+=*count;
     if (*profit_best>profitmax){
@@ -135,29 +119,17 @@ void solveNQueens(int n,int pid,int p,int **board_max) {
             }
     }
     pthread_mutex_unlock(&lock);
-    //printBoard(board_max,n); 
-    //printf("===============\n");
-    //printf("number of solutions: %d\n", *count);
-    //printf("totalcount is %d\n",totalcount);
-    fflush(stdout);
-
-    /*
-    for (int i = 0; i < count; i ++) {
-        printBoard(res[i], n);
-        printf("===============\n");
-    }
-    */
 }
 
 void *nqueensHelper(void *varg){
-    GM *arg =varg;
-    int pid,n,p,count;
+    GM *arg = varg;
+    int pid, n, p, count;
     int **board_max;
     pid  = arg->pid;
     p    = arg->p;
     n    = arg->n;
-    board_max=arg->board_max;
-    solveNQueens(n,pid,p,board_max); 
+    board_max = arg->board_max;
+    solveNQueens(n, pid, p, board_max); 
     return NULL;
 }
 
@@ -172,9 +144,7 @@ int main(int argc, char **argv) {
     }
     n = atoi(argv[1]);
     p = atoi(argv[2]);
-    
-    //n = 12;
-    //p = 4;   
+      
     printf("n = %d\np = %d\n", n, p);
     fflush(stdout);
     int ** board_max    = (int**)malloc(n * sizeof(int *));
@@ -208,6 +178,5 @@ int main(int argc, char **argv) {
     
     printf("Elapsed: %lf seconds\n", time);
     free(threads);
-    //solveNQueens(n);
     return 0;
 }
