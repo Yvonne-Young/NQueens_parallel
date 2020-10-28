@@ -12,12 +12,10 @@
 pthread_mutex_t lock= PTHREAD_MUTEX_INITIALIZER;
 int totalcount = 0;
 int profitmax  = 0;
-double calc_time_arr[20];
 
 typedef struct{
     int n,pid,p;
     int ** board_max;
-    // double *calc_time_ptr;
 }GM;
 
 // To check if a location is safe to place a queen
@@ -131,27 +129,19 @@ void *nqueensHelper(void *varg){
     GM *arg =varg;
     int pid, n, p, count;
     int **board_max;
-    struct timespec cal_start, cal_end_time;
-    double calc_time;
-    clock_gettime(CLOCK_MONOTONIC, &cal_start);
     pid           = arg->pid;
     p             = arg->p;
     n             = arg->n;
     board_max     = arg->board_max;
 
     solveNQueens(n, pid, p, board_max); 
-    clock_gettime(CLOCK_MONOTONIC, &cal_end_time);
-    calc_time = BILLION * (cal_end_time.tv_sec - cal_start.tv_sec) + (cal_end_time.tv_nsec - cal_start.tv_nsec);
-    calc_time = calc_time / BILLION;
-    calc_time_arr[pid] = calc_time;
     return NULL;
 }
 
 int main(int argc, char **argv) {
     int n, p;
-    double total_time, tcreation_time, finish_time;
-    struct timespec start, end;
-    struct timespec tcreation_end, finish_end;
+    double total_time, tcreation_time, execution_time, finish_time;
+    struct timespec start, tcreation_end, execution_end, program_end;
     
     if (argc != 3) {
         printf("Usage: nqueens n p\nAborting...\n");
@@ -187,35 +177,37 @@ int main(int argc, char **argv) {
     for (int i = 0; i < p; i ++){
         pthread_join(threads[i], NULL);
     }
-    clock_gettime(CLOCK_MONOTONIC, &finish_end);
+    clock_gettime(CLOCK_MONOTONIC, &execution_end);
 
-    clock_gettime(CLOCK_MONOTONIC, &end);
     printf("The number of solution is %d\n", totalcount);
     printf("The max profit is %d\n", profitmax);
     printBoard(board_max, n);
-    total_time =
-    BILLION *(end.tv_sec - start.tv_sec) +(end.tv_nsec - start.tv_nsec);
-    total_time = total_time / BILLION;
+    free(threads);
+    free(board_max);
+
     tcreation_time =
     BILLION *(tcreation_end.tv_sec - start.tv_sec) +(tcreation_end.tv_nsec - start.tv_nsec);
     tcreation_time = tcreation_time / BILLION;
 
-    double cal_max_time = 0;
-    for (int i = 0; i < tnum; i ++) {
-        double cal_time = calc_time_arr[i];
-        if (cal_time > cal_max_time) {
-            cal_max_time = cal_time;
-        }
-    }
+    execution_time =
+    BILLION *(execution_end.tv_sec - tcreation_end.tv_sec) +(execution_end.tv_nsec - tcreation_end.tv_nsec);
+    execution_time = execution_time / BILLION;
 
-    finish_time = (total_time - tcreation_time - cal_max_time > 0) ? (total_time - tcreation_time - cal_max_time) : 0;
-    
+    clock_gettime(CLOCK_MONOTONIC, &program_end);
+
+    finish_time = 
+    BILLION * (program_end.tv_sec - execution_end.tv_sec) + (program_end.tv_nsec - execution_end.tv_nsec);
+    finish_time = finish_time / BILLION;
+
+    total_time = 
+    BILLION * (program_end.tv_sec - start.tv_sec) + (program_end.tv_nsec - start.tv_nsec);
+    total_time = total_time / BILLION;
+
     printf("Elapsed:              %lf seconds\n", total_time);
     printf("Thread creation time: %lf seconds\n", tcreation_time);
-    printf("Computation time:     %lf seconds\n", cal_max_time);
+    printf("Computation time:     %lf seconds\n", execution_time);
     printf("Finish time:          %lf seconds\n", finish_time);
 
-    free(threads);
-    free(board_max);
+
     return 0;
 }

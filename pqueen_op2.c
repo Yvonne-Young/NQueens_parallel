@@ -190,18 +190,16 @@ void *nqueensHelper(void *varg){
 
 int main(int argc, char **argv) {
     int n, p;
-    double time;
-    struct timespec start, end;
-    /*
+    double total_time, tcreation_time, execution_time, finish_time;
+    struct timespec start, tcreation_end, execution_end, program_end;
+    
     if (argc != 3) {
         printf("Usage: nqueens n p\nAborting...\n");
         exit(0);
     }
     n = atoi(argv[1]);
     p = atoi(argv[2]);
-    */
-    n =15;
-    p =20;   
+    
     printf("n = %d\np = %d\n", n, p);
     fflush(stdout);
     int ** board_max    = (int**)malloc(n * sizeof(int *));
@@ -228,19 +226,47 @@ int main(int argc, char **argv) {
             pthread_create(&threads[i*p/2+j],NULL,nqueensHelper,arg);
         }
     }
+
+    clock_gettime(CLOCK_MONOTONIC, &tcreation_end);
+
     for (int i=0;i<p;i++){
         pthread_join(threads[i],NULL);
     }
-    clock_gettime(CLOCK_MONOTONIC, &end);
+    clock_gettime(CLOCK_MONOTONIC, &execution_end);
+
+    printf("The number of solution is %d\n", totalcount);
+    printf("The max profit is %d\n", profitmax);
+    printBoard(board_max, n);
+
+    free(threads);
+    free(board_max);
+
     printf("The number of solution is %d\n",totalcount);
     printf("The max profit is %d\n",profitmax);
-    printBoard(board_max,n);
-    time =
-    BILLION *(end.tv_sec - start.tv_sec) +(end.tv_nsec - start.tv_nsec);
-    time = time / BILLION;
-    
-    printf("Elapsed: %lf seconds\n", time);
-    free(threads);
-    //solveNQueens(n);
+
+    tcreation_time =
+    BILLION *(tcreation_end.tv_sec - start.tv_sec) +(tcreation_end.tv_nsec - start.tv_nsec);
+    tcreation_time = tcreation_time / BILLION;
+
+    execution_time =
+    BILLION *(execution_end.tv_sec - tcreation_end.tv_sec) +(execution_end.tv_nsec - tcreation_end.tv_nsec);
+    execution_time = execution_time / BILLION;
+
+    clock_gettime(CLOCK_MONOTONIC, &program_end);
+
+    finish_time = 
+    BILLION * (program_end.tv_sec - execution_end.tv_sec) + (program_end.tv_nsec - execution_end.tv_nsec);
+    finish_time = finish_time / BILLION;
+
+    total_time = 
+    BILLION * (program_end.tv_sec - start.tv_sec) + (program_end.tv_nsec - start.tv_nsec);
+    total_time = total_time / BILLION;
+
+    printf("Elapsed:              %lf seconds\n", total_time);
+    printf("Thread creation time: %lf seconds\n", tcreation_time);
+    printf("Computation time:     %lf seconds\n", execution_time);
+    printf("Finish time:          %lf seconds\n", finish_time);
+
+
     return 0;
 }
