@@ -125,11 +125,11 @@ void solveNQueens(int n,int p,int **board_max,int firstrow,int secondrow,int pos
         }
     }
     int iteration = (n+1)/2;
-    for (int i=pos_first;i<iteration;i+=2)
+    for (int i=pos_first;i<iteration;i+=firstrow)
     {
         board[i][0]=1;
         *profit+=+i;
-        for (int j=pos_second; j<n;j+=p/2){
+        for (int j=pos_second; j<n;j+=secondrow){
             if( isSafe(board,j,1,n)==1 ){
                 board[j][1]=1;
                 *profit+=abs(j-1);
@@ -192,14 +192,12 @@ int main(int argc, char **argv) {
     int n, p;
     double total_time, tcreation_time, execution_time, finish_time;
     struct timespec start, tcreation_end, execution_end, program_end;
-    
     if (argc != 3) {
         printf("Usage: nqueens n p\nAborting...\n");
         exit(0);
     }
     n = atoi(argv[1]);
     p = atoi(argv[2]);
-    
     printf("n = %d\np = %d\n", n, p);
     fflush(stdout);
     int ** board_max    = (int**)malloc(n * sizeof(int *));
@@ -212,19 +210,35 @@ int main(int argc, char **argv) {
     /*modify the parallel version*/
     clock_gettime(CLOCK_MONOTONIC, &start);
     pthread_t *threads = malloc (p* sizeof(threads));
-    for (int i=0;i<2;i++){      //check 2 position in first row each time
-        for (int j=0;j<p/2;j++){ 
-            GM *arg =malloc(sizeof(*arg));
-            arg->n=n;
-            //arg->pid=i*2+j;
-            arg->p=p;
-            arg->board_max=board_max;
-            arg->firstrow= 2;
-            arg->secondrow= p/2;
-            arg->pos_first=i;
-            arg->pos_second=j;
-            pthread_create(&threads[i*p/2+j],NULL,nqueensHelper,arg);
-        }
+    if (p>1){
+    	for (int i=0;i<2;i++){      //check 2 position in first row each time
+        	for (int j=0;j<p/2;j++){ 
+            	GM *arg =malloc(sizeof(*arg));
+            	arg->n=n;
+            	//arg->pid=i*2+j;
+            	arg->p=p;
+            	arg->board_max=board_max;
+            	arg->firstrow= 2;
+            	arg->secondrow= p/2;
+            	arg->pos_first=i;
+            	arg->pos_second=j;
+            	pthread_create(&threads[i*p/2+j],NULL,nqueensHelper,arg);
+        	}
+    	}
+    }
+    else{
+    	for (int i = 0; i < p; i ++){
+        	GM *arg = malloc(sizeof(*arg));
+        	arg->n = n;
+        	//arg->pid = i;
+        	arg->p = p;
+        	arg->board_max  = board_max;
+        	arg->firstrow   = 1;
+        	arg->secondrow  = p;
+        	arg->pos_first  = i;
+        	arg->pos_second = 0;
+        	pthread_create(&threads[i], NULL, nqueensHelper, arg);
+    }
     }
 
     clock_gettime(CLOCK_MONOTONIC, &tcreation_end);
