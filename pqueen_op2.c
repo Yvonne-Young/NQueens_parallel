@@ -1,5 +1,5 @@
-// Date: 10/17/2020
-// N-Queens problem solved by backtracking (no parallelism)
+// Date: 10/30/2020
+// N-Queens problem solved by parallelized backtracking
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,9 +15,9 @@ int totalcount = 0;
 int profitmax  = 0;
 
 typedef struct{
-    int n,p,firstrow,secondrow,pos_first,pos_second;
+    int n, p, firstrow, secondrow, pos_first, pos_second;
     int ** board_max;
-}GM;
+} GM;
 
 // To check if a location is safe to place a queen
 int isSafe(int ** board, int row, int col, int n) {
@@ -46,48 +46,31 @@ int isSafe(int ** board, int row, int col, int n) {
 
 // Recursive function
 void solveHelper(int ** board,int n,int col,int **opt_board,int *count,int *profit,int*profit_best,int i){
-    if (col == n) {
-        // memcpy(res[count++][0], board[0], sizeof(board));
-        //int temp=*count;
-        /*
-        for (int i = 0; i < n; i ++) {
-            for (int j = 0; j < n; j ++) {
-                res[temp][i][j] = board[i][j];
-            }
-        }
-        */
-        
-        if (*profit>*profit_best){
-            *profit_best=*profit;
-            for(int i=0;i<n;i++){
-                for(int j=0;j<n;j++){
+    if (col == n) {        
+        if (*profit > *profit_best){
+            *profit_best = *profit;
+            for(int i = 0; i < n;i ++){
+                for(int j = 0; j < n; j ++){
                     opt_board[i][j] = board[i][j];
                 }
             }
         }
         
-        if (i== (n+1)/2 - 1 && (n%2!=0) ){
+        if (i == (n + 1) / 2 - 1 && (n % 2 != 0) ){
             *count = *count + 1;         //it is deal with the mid row
         }  
         else {
             *count = *count + 2;
         }
-        
-        //*count = *count + 2;
-        
-        //printf("count increase by 1,now is %d\n",*count);
         return;
     }
     for (int row = 0; row < n; row ++) {
         if (isSafe(board, row, col, n) == 1) {
             board[row][col] = 1;
-            *profit+=abs(col-row);
-            //printf("row = %d, col= %d is safe!\n",row,col);
-            solveHelper(board, n, col + 1,opt_board,count,profit,profit_best,i);
-            //printf("Remove row = %d, col= %d\n",row,col);
+            *profit += abs(col - row);
+            solveHelper(board, n, col + 1, opt_board, count, profit, profit_best, i);
             board[row][col] = 0;
-            *profit-=abs(col-row);
-            //printf("check count %d\n",*count );
+            *profit -= abs(col - row);
         }
     }
 }
@@ -104,52 +87,45 @@ void printBoard(int ** board, int n) {
 
 // Initialization and entry to the recursive function
 void solveNQueens(int n,int p,int **board_max,int firstrow,int secondrow,int pos_first,int pos_second) {
-    //int *** res         = (int ***)malloc(100000 * sizeof(int **));
     int ** board        = (int **)malloc(n * sizeof(int *));
     int *  count        = (int *)malloc(sizeof(int));
     int ** opt_board    = (int**)malloc(n * sizeof(int *));
-    //int ** board_max    = (int**)malloc(n * sizeof(int *));
     int *  profit       = (int *)malloc(sizeof(int));
     int *  profit_best  = (int *)malloc(sizeof(int));
 
-    //a counter for each thread
-     * count=0;
-     //* profit=0;
-     * profit_best=0;
+    // a counter for each thread
+     * count = 0;
+     * profit_best = 0;
     for (int i = 0; i < n; i ++) {
         board[i] = (int *)malloc(n * sizeof(int));
         opt_board[i]= (int *)malloc(n * sizeof(int));
         for (int j = 0; j < n; j ++) {
             board[i][j] = 0;
-            opt_board[i][j]=0;
+            opt_board[i][j] = 0;
         }
     }
-    int iteration = (n+1)/2;
-    for (int i=pos_first;i<iteration;i+=firstrow)
+    int iteration = (n + 1) / 2;
+    for (int i = pos_first; i < iteration; i += firstrow)
     {
-        board[i][0]=1;
-        *profit+=+i;
-        for (int j=pos_second; j<n;j+=secondrow){
-            if( isSafe(board,j,1,n)==1 ){
-                board[j][1]=1;
-                *profit+=abs(j-1);
-                solveHelper(board, n, 2,opt_board,count,profit,profit_best,i);
-                board[j][1]=0;
-                *profit-=abs(j-1);
+        board[i][0] = 1;
+        *profit += +i;
+        for (int j = pos_second; j < n;j += secondrow){
+            if(isSafe(board, j, 1, n) == 1){
+                board[j][1] = 1;
+                *profit += abs(j - 1);
+                solveHelper(board, n, 2, opt_board, count, profit, profit_best, i);
+                board[j][1] = 0;
+                *profit -= abs(j - 1);
             }
         }
-        //solveHelper(board, n, 1,opt_board,count,profit,profit_best,i);
-        board[i][0]=0;
-        *profit-=i;
+        board[i][0] = 0;
+        *profit -= i;
     }
-    //solveHelper(board, res, n, 1);
-    //int res_size = sizeof(res) / (n * sizeof(int**));
-    //int iteration=(n+1)/2;
-    //printf("Now iteration is %d\n",iteration);
     
+    // Critical Section start
     pthread_mutex_lock(&lock);
-    totalcount+=*count;
-    if (*profit_best>profitmax){
+    totalcount += *count;
+    if (*profit_best > profitmax){
         profitmax = *profit_best;
         for (int i = 0; i < n; i ++) {
                 for (int j = 0; j < n; j ++) {
@@ -158,33 +134,21 @@ void solveNQueens(int n,int p,int **board_max,int firstrow,int secondrow,int pos
             }
     }
     pthread_mutex_unlock(&lock);
-    //printBoard(board_max,n); 
-    //printf("===============\n");
-    //printf("number of solutions: %d\n", *count);
-    //printf("totalcount is %d\n",totalcount);
-    fflush(stdout);
-
-    /*
-    for (int i = 0; i < count; i ++) {
-        printBoard(res[i], n);
-        printf("===============\n");
-    }
-    */
+    // Critical Section end
 }
 
 void *nqueensHelper(void *varg){
-    GM *arg =varg;
-    int pid,n,p,count,firstrow,secondrow,pos_first,pos_second;
+    GM *arg = varg;
+    int pid, n, p, count, firstrow, secondrow, pos_first, pos_second;
     int **board_max;
-    //pid  = arg->pid;
-    p    = arg->p;
-    n    = arg->n;
-    firstrow=arg->firstrow;
-    secondrow=arg->secondrow;
-    pos_first=arg->pos_first;
-    pos_second=arg->pos_second;
-    board_max=arg->board_max;
-    solveNQueens(n,p,board_max,firstrow,secondrow,pos_first,pos_second); 
+    p          = arg->p;
+    n          = arg->n;
+    firstrow   = arg->firstrow;
+    secondrow  = arg->secondrow;
+    pos_first  = arg->pos_first;
+    pos_second = arg->pos_second;
+    board_max  = arg->board_max;
+    solveNQueens(n, p, board_max, firstrow, secondrow, pos_first, pos_second); 
     return NULL;
 }
 
@@ -200,53 +164,52 @@ int main(int argc, char **argv) {
     p = atoi(argv[2]);
     printf("n = %d\np = %d\n", n, p);
     fflush(stdout);
-    int ** board_max    = (int**)malloc(n * sizeof(int *));
+    int ** board_max = (int**)malloc(n * sizeof(int *));
     for (int i = 0; i < n; i ++) {
         board_max[i]= (int *)malloc(n * sizeof(int));
         for (int j = 0; j < n; j ++) {
-            board_max[i][j]=0;
+            board_max[i][j] = 0;
         }
     }
-    /*modify the parallel version*/
+    // Initialization Start
     clock_gettime(CLOCK_MONOTONIC, &start);
-    pthread_t *threads = malloc (p* sizeof(threads));
-    if (p>1){
-    	for (int i=0;i<2;i++){      //check 2 position in first row each time
-        	for (int j=0;j<p/2;j++){ 
-            	GM *arg =malloc(sizeof(*arg));
-            	arg->n=n;
-            	//arg->pid=i*2+j;
-            	arg->p=p;
-            	arg->board_max=board_max;
-            	arg->firstrow= 2;
-            	arg->secondrow= p/2;
-            	arg->pos_first=i;
-            	arg->pos_second=j;
-            	pthread_create(&threads[i*p/2+j],NULL,nqueensHelper,arg);
+    pthread_t *threads = malloc(p* sizeof(threads));
+    if (p > 1){
+    	for (int i = 0; i < 2; i ++){      //check 2 position in first row each time
+        	for (int j = 0; j < p / 2; j ++){ 
+            	GM *arg = malloc(sizeof(*arg));
+            	arg->n          = n;
+            	arg->p          =p;
+            	arg->board_max  = board_max;
+            	arg->firstrow   = 2;
+            	arg->secondrow  = p / 2;
+            	arg->pos_first  =i;
+            	arg->pos_second =j;
+            	pthread_create(&threads[i * p / 2 + j], NULL, nqueensHelper, arg);
         	}
     	}
     }
     else{
     	for (int i = 0; i < p; i ++){
         	GM *arg = malloc(sizeof(*arg));
-        	arg->n = n;
-        	//arg->pid = i;
-        	arg->p = p;
+        	arg->n          = n;
+        	arg->p          = p;
         	arg->board_max  = board_max;
         	arg->firstrow   = 1;
         	arg->secondrow  = p;
         	arg->pos_first  = i;
         	arg->pos_second = 0;
         	pthread_create(&threads[i], NULL, nqueensHelper, arg);
+        }
     }
-    }
-
     clock_gettime(CLOCK_MONOTONIC, &tcreation_end);
+    // Initialization end
 
     for (int i=0;i<p;i++){
         pthread_join(threads[i],NULL);
     }
     clock_gettime(CLOCK_MONOTONIC, &execution_end);
+    // Computation end
 
     printf("The number of solution is %d\n", totalcount);
     printf("The max profit is %d\n", profitmax);
@@ -280,7 +243,6 @@ int main(int argc, char **argv) {
     printf("Thread creation time: %lf seconds\n", tcreation_time);
     printf("Computation time:     %lf seconds\n", execution_time);
     printf("Finish time:          %lf seconds\n", finish_time);
-
 
     return 0;
 }
