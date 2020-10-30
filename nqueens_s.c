@@ -39,15 +39,6 @@ int isSafe(int ** board, int row, int col, int n) {
 // Recursive function
 void solveHelper(int ** board, int n, int col,int **opt_board) {
     if (col == n) {
-        // memcpy(res[count++][0], board[0], sizeof(board));
-        /*
-        for (int i = 0; i < n; i ++) {
-            for (int j = 0; j < n; j ++) {
-                res[count][i][j] = board[i][j];
-            }
-        }
-        */
-        //compare profit with the best profit
         if (profit > profit_best){
             profit_best = profit;
             for (int i = 0; i < n; i ++) {
@@ -56,21 +47,17 @@ void solveHelper(int ** board, int n, int col,int **opt_board) {
                 }
             }
         }
-
         count ++;
         return;
     }
     for (int row = 0; row < n; row ++) {
         if (isSafe(board, row, col, n) == 1) {
             board[row][col] = 1;
-            profit+= abs(col-row);
-            solveHelper(board, n, col + 1,opt_board);
+            profit += abs(col - row);
+            solveHelper(board, n, col + 1, opt_board);
             board[row][col] = 0;
-            profit-=abs(col-row);
+            profit -= abs(col - row);
         }
-        //else{
-        //    printf("row = %d, col= %d is not safe!\n",row,col);
-        //}
     }
 }
 
@@ -86,38 +73,17 @@ void printBoard(int ** board, int n) {
 
 // Initialization and entry to the recursive function
 void solveNQueens(int n) {
-    //int *** res = (int ***)malloc(100000 * sizeof(int **));
     int ** board = (int **)malloc(n * sizeof(int *));
-    //opt_board is to record position of profit best
     int ** opt_board = (int **)malloc(n * sizeof(int *));
     for (int i = 0; i < n; i ++) {
         board[i]    = (int *)malloc(n * sizeof(int));
         opt_board[i]= (int *)malloc(n * sizeof(int));
         for (int j = 0; j < n; j ++) {
             board[i][j] = 0;
-            opt_board[i][j]=0;
+            opt_board[i][j] = 0;
         }
     }
-    /*
-    for (int i = 0; i < 100000; i ++) {
-        res[i] = (int **)malloc(n * sizeof(int *));
-        for (int j = 0; j < n; j ++) {
-            res[i][j] = (int *)malloc(n * sizeof(int));
-        }
-    }
-    */
-    solveHelper(board, n, 0,opt_board);
-    //int res_size = sizeof(res) / (n * sizeof(int**));
-    //printf("number of solutions: %d\n", count);
-    fflush(stdout);
-    /*
-    for (int i = 0; i < count; i ++) {
-        printBoard(res[i], n);
-        printf("===============\n");
-
-    }
-    */
-    //printf("The best profit is %d\n",profit_best);
+    solveHelper(board, n, 0, opt_board);
     printBoard(opt_board,n);
 }
 
@@ -131,8 +97,6 @@ int main(int argc, char **argv) {
     }
     n = atoi(argv[1]);
     p = atoi(argv[2]);
-    //n = 12;
-    //p = 1;   
     printf("n = %d\np = %d\n", n, p);
     fflush(stdout);
     clock_gettime(CLOCK_MONOTONIC, &start);

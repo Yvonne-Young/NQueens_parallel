@@ -95,13 +95,13 @@ void solveNQueens(int n,int pid,int p,int **board_max) {
         opt_board[i]= (int *)malloc(n * sizeof(int));
         for (int j = 0; j < n; j ++) {
             board[i][j] = 0;
-            opt_board[i][j]=0;
+            opt_board[i][j] = 0;
         }
     }
 
-    for (int i=pid;i<n;i+=p)
+    for (int i = pid;i < n;i += p)
     {
-        board[i][0]=1;
+        board[i][0] = 1;
         *profit+=+i;
         solveHelper(board, n, 1,opt_board,count,profit,profit_best);
         board[i][0]=0;
